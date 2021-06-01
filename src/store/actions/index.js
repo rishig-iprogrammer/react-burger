@@ -11,5 +11,7 @@ export {
 } from './burgerBuilder';
 
 export {
-    auth
+    auth,
+    logout,
+    setAuthPathRedirect
 } from './auth'
