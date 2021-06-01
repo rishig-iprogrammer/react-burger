@@ -8,6 +8,7 @@ import Spinner from '../../../components/UI/Spinner/Spinner';
 import Input from '../../../components/UI/Input/Input';
 import withErrorHandler from '../../../hoc/withErrorHandler/withErrorHandler';
 import * as actions from '../../../store/actions/index';
+import { updateObject, checkValidity } from '../../../shared/utility';
 
 class ContactData extends Component {
     state = {
@@ -102,45 +103,27 @@ class ContactData extends Component {
         const order = {
             ingredients : this.props.ings,
             price : this.props.price,
-            orderData : formData
+            orderData : formData,
+            userId: this.props.userId
         }
 
         this.props.onOrderBurger(order, this.props.token); // call the action
     }
 
-    checkValidity(value, rules) {
-        let isValid = true;
-        if(rules) {
-            if(rules.required) {
-                isValid = value.trim() !== '' && isValid;
-            }
-            if(rules.minLength) {
-                isValid = value.length >= rules.minLength && isValid;
-            }
-            if(rules.maxLength) {
-                isValid = value.length <= rules.maxLength && isValid;
-            }
-        }
-        return isValid;
-    }
-
     inputChangedHandler = (event, inputIdentifier) => {
         //clone list of elements
-        const updatedOrderForm = {
-            ...this.state.orderForm
-        }
+        
         //get details of a particular form element since previous statement doesn't create a deep clone
-        const updatedFormElement = {
-            ...updatedOrderForm[inputIdentifier]
-        }
-        //change the value in the clone element
-        updatedFormElement.value = event.target.value;
-        //update the validity of the element
-        updatedFormElement.valid = this.checkValidity(updatedFormElement.value, updatedFormElement.validation);
-        updatedFormElement.touched = true;
-        //replace the element in the cloned list of elements
-        updatedOrderForm[inputIdentifier] = updatedFormElement
-        //check overall validity
+        const updatedFormElement = updateObject(this.state.orderForm[inputIdentifier], {
+            value: event.target.value,
+            valid: checkValidity( event.target.value, this.state.orderForm[inputIdentifier].validation),
+            touched: true
+        })
+
+        const updatedOrderForm = updateObject(this.state.orderForm, {
+            [inputIdentifier] : updatedFormElement
+        })
+        
         let formIsValid = true;
         for(let inputIdentifier in updatedOrderForm) {
             formIsValid = updatedOrderForm[inputIdentifier].valid && formIsValid;
@@ -192,7 +175,8 @@ const mapStateToProps = state => {
         price : state.burgerBuilder.totalPrice,
         ings : state.burgerBuilder.ingredients,
         loading : state.order.loading,
-        token: state.auth.token
+        token: state.auth.token,
+        userId : state.auth.userId
     }
 }
 
